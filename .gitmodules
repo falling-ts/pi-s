@@ -10,3 +10,7 @@
 	path = pi-chinese
 	url = git@github.com:falling-ts/pi-chinese.git
 	branch = main
+[submodule "pi-working"]
+	path = pi-working
+	url = git@github.com:falling-ts/pi-working.git
+	branch = main
