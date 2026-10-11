@@ -2,3 +2,11 @@
 	path = refs/pi
 	url = https://github.com/earendil-works/pi
 	branch = main
+[submodule "refs/workbuddy-openai-proxy"]
+	path = refs/workbuddy-openai-proxy
+	url = https://github.com/yuan240324/workbuddy-openai-proxy.git
+	branch = main
+[submodule "pi-chinese"]
+	path = pi-chinese
+	url = git@github.com:falling-ts/pi-chinese.git
+	branch = main

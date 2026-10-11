@@ -24,6 +24,9 @@
 | `docs/` | 正式文档：调研笔记、架构分析、实验记录、决策记录 | 仅 `.gitkeep`，文档入库 |
 | `refs/` | 外部参考项目容器 | 仅 `.gitkeep` |
 | `refs/pi/` | 上游 `pi` 源码，以 **git submodule** 形式接入 | 父仓库只记录 commit 指针 |
+| `refs/workbuddy-openai-proxy/` | WorkBuddy/CodeBuddy 本地 OpenAI/Anthropic 兼容反代源码，以 **git submodule** 形式接入（零依赖 `node server.mjs`） | 父仓库只记录 commit 指针 |
+| `workbuddy-proxy.cmd` | WorkBuddy 反代启动器（start/stop/restart/login/status/console/ask），委派给 `refs/workbuddy-openai-proxy/` | ✅ 入库 |
+| `pi-chinese/` | 自研 pi 扩展：**强制全程简体中文**（通过 `before_agent_start` 钩子注入系统提示词），以 **git submodule** 形式接入（远程 `git@github.com:falling-ts/pi-chinese.git`） | 父仓库只记录 commit 指针 |
 | `.gitignore` | 忽略规则（构建产物、环境密钥、编辑器/系统垃圾、agent 运行期状态） | ✅ 入库 |
 | `.gitmodules` | 子项目（submodule）声明：路径、URL、跟踪分支 | ✅ 入库 |
 
@@ -72,6 +75,8 @@ npm.cmd run hydrate:model-data                     # 联网生成 providers/data
 
 - 本空间远程仓库：`origin` → `git@github.com:falling-ts/pi-space.git`（分支 `main`）
 - 子模块：`refs/pi` → <https://github.com/earendil-works/pi>（跟踪分支 `main`）
+- 子模块：`refs/workbuddy-openai-proxy` → <https://github.com/yuan240324/workbuddy-openai-proxy.git>（跟踪分支 `main`）：把 WorkBuddy/CodeBuddy 额度包装成本机 OpenAI/Anthropic 兼容接口（默认 `http://127.0.0.1:8788/v1`）；根目录 `workbuddy-proxy.cmd` 管理其启停；开始菜单仿 `comfy-server.lnk` 平铺单条目 `WorkBuddy Proxy.lnk`（Programs 根目录，双击启动，不入库、手动创建）
+- 子模块：`pi-chinese` → <https://github.com/falling-ts/pi-chinese.git>（跟踪分支 `main`）：自研 pi 扩展，在每次请求前经 `before_agent_start` 钩子把"全程简体中文（含思考与中间输出）"写入系统提示词；经软链 `~/.pi/agent/extensions/pi-chinese` 被 pi 全局加载（无需构建，`jiti` 直读 `.ts`）
 - 本地 pi 启动器：根目录 `pi.cmd`（纯批处理，直调 `node`）/ `pi.ps1`（PowerShell 原生入口）/ `pi`（Git Bash），运行的是 `.agents/scratch/pi` 这份工作副本（上游 `1b347794` 的复制）；三者共用 `.agents/scratch/node-compile-cache`（V8 compile cache，不入库，可随时删）
 - 用户 PATH（`HKCU\Environment`，**仅用户级，未动系统 PATH**）含 `D:\AI\pi-space`：任意目录下裸 `pi` 直接可用；换机器需重新添加该条目
 - 仓库说明见 [`README.md`](README.md)（子目录不含 README）
