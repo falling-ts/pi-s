@@ -1,4 +1,4 @@
-# pi-space
+# pi-s
 
 pi agent 的专属工作空间：围绕上游 [pi](https://github.com/earendil-works/pi) 做源码研读、实验与文档沉淀。
 
@@ -57,7 +57,7 @@ git submodule add -b main <repo-url> refs/<name>
 
 启动开销（本机实测，Node 22.20 / Windows，三次取最小值）：cmd 约 1011 ms、PowerShell 约 980 ms、Git Bash 约 1180 ms、不含启动器的直接 `node` 约 943 ms。其中 pi 自身逻辑只占约 55 ms（`PI_TIMING=1` 可见），其余是 538 个模块的类型剥离与模型目录 JSON 解析。
 
-**仓库根 `D:\AI\pi-space` 已加入用户 PATH**（`HKCU\Environment`，仅用户级，未动系统 PATH），所以任意目录下裸 `pi` 都能用，不限于仓库根。若在旧终端里 `pi` 找不到，重开终端让 PATH 生效即可；换机器后需重新添加该条目。
+**仓库根 `D:\AI\pi-s` 已加入用户 PATH**（`HKCU\Environment`，仅用户级，未动系统 PATH），所以任意目录下裸 `pi` 都能用，不限于仓库根。若在旧终端里 `pi` 找不到，重开终端让 PATH 生效即可；换机器后需重新添加该条目。
 
 它们启动的是 `.agents/scratch/pi` 这份本地工作副本，`refs/pi` 始终保持只读。副本不入库，换机器或清理 `.agents/` 后按下面步骤重建：
 

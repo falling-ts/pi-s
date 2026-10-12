@@ -1,6 +1,6 @@
 # AGENTS.md — pi agent 专属空间
 
-本仓库是 **pi agent 的专属工作空间**（workspace root：`D:\AI\pi-space`）。
+本仓库是 **pi agent 的专属工作空间**（workspace root：`D:\AI\pi-s`）。
 
 任何在此目录下工作的 agent / 协作者，开始任务前先读完本文件。
 
@@ -81,7 +81,7 @@ npm.cmd run hydrate:model-data                     # 联网生成 providers/data
 
 ### 4.3 加入用户 PATH
 
-仓库根 `D:\AI\pi-space` 需加入**用户级** PATH（`HKCU\Environment`，**不要动系统 PATH**），
+仓库根 `D:\AI\pi-s` 需加入**用户级** PATH（`HKCU\Environment`，**不要动系统 PATH**），
 这样任意目录、任意 shell（cmd / pwsh 命中 `pi.cmd`，Git Bash 命中 `pi`）裸命令 `pi` 都可用。
 换机器后需重新添加该条目；旧终端里找不到 `pi` 时重开终端即可。
 
@@ -93,7 +93,7 @@ pi 启动时扫描 `~/.pi/agent/extensions/` 自动加载扩展；把仓库里�
 ```powershell
 New-Item -ItemType SymbolicLink `
   -Path "$env:USERPROFILE\.pi\agent\extensions\pi-chinese" `
-  -Target "D:\AI\pi-space\pi-chinese"
+  -Target "D:\AI\pi-s\pi-chinese"
 ```
 
 该扩展经 `before_agent_start` 钩子把"全程简体中文（含思考与中间输出）"写入系统提示词，
@@ -106,7 +106,7 @@ New-Item -ItemType SymbolicLink `
 ```powershell
 New-Item -ItemType SymbolicLink `
   -Path "$env:USERPROFILE\.pi\agent\extensions\pi-working" `
-  -Target "D:\AI\pi-space\pi-working"
+  -Target "D:\AI\pi-s\pi-working"
 ```
 
 该扩展把运行时的状态指示器翻译为中文：`工作中` / `请求中`（已请求模型、等首个 token）/ `响应中`
@@ -151,13 +151,13 @@ git -C refs/pi log --oneline --decorate -10 origin/main
 git submodule status
 
 # 运行本地 pi（源码直跑，启动器见根目录 pi.cmd / pi.ps1 / pi）
-# 用户 PATH 已含 D:\AI\pi-space，故任意目录、任意 shell 都是裸命令：
+# 用户 PATH 已含 D:\AI\pi-s，故任意目录、任意 shell 都是裸命令：
 pi --version       # cmd / pwsh 命中 pi.cmd（纯批处理直调 node），Git Bash 命中 pi
 ```
 
 ## 6. 当前状态
 
-- 本空间远程仓库：`origin` → `git@github.com:falling-ts/pi-space.git`（分支 `main`）
+- 本空间远程仓库：`origin` → `git@github.com:falling-ts/pi-s.git`（分支 `main`）
 - 子模块：`refs/pi` → <https://github.com/earendil-works/pi>（跟踪分支 `main`）
 - 子模块：`refs/workbuddy-openai-proxy` → <https://github.com/yuan240324/workbuddy-openai-proxy.git>（跟踪分支 `main`）：把 WorkBuddy/CodeBuddy 额度包装成本机 OpenAI/Anthropic 兼容接口（默认 `http://127.0.0.1:8788/v1`）；根目录 `workbuddy-proxy.cmd` 管理其启停
 - 子模块：`pi-chinese` → <https://github.com/falling-ts/pi-chinese.git>（跟踪分支 `main`）：自研 pi 扩展，在每次请求前经 `before_agent_start` 钩子把"全程简体中文（含思考与中间输出）"写入系统提示词（初始化软链见 4.4）

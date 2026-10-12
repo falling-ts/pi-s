@@ -1,4 +1,4 @@
-# pi - run upstream pi from source (pi-space local launcher)
+# pi - run upstream pi from source (pi-s local launcher)
 #
 # Lives at the repo root. The pi checkout itself is a local working copy at
 # .agents/scratch/pi (a copy of the read-only submodule refs/pi), so this file

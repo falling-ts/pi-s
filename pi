@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pi - run upstream pi from source (pi-space local launcher)
+# pi - run upstream pi from source (pi-s local launcher)
 #
 # Git Bash / MSYS variant of pi.cmd. Note that bash does not search the current
 # directory, so run it as ./pi unless "." is on PATH.

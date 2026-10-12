@@ -1,5 +1,5 @@
 @echo off
-rem pi - run upstream pi from source (pi-space local launcher)
+rem pi - run upstream pi from source (pi-s local launcher)
 rem Pure cmd: resolves the local checkout itself and starts node directly.
 rem Keep this file ASCII-only and CRLF (see .gitattributes).
 setlocal
