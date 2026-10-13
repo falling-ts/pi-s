@@ -28,6 +28,7 @@
 | `workbuddy-proxy.cmd` | WorkBuddy 反代启动器（start/stop/restart/login/status/console/ask），委派给 `refs/workbuddy-openai-proxy/` | ✅ 入库 |
 | `pi-chinese/` | 自研 pi 扩展：**强制全程简体中文**（通过 `before_agent_start` 钩子注入系统提示词），以 **git submodule** 形式接入（远程 `git@github.com:falling-ts/pi-chinese.git`） | 父仓库只记录 commit 指针 |
 | `pi-working/` | 自研 pi 扩展：**状态指示器中文化**（Working/请求中/响应中/执行中，`PI_WORKING_LANG` 切英文），以 **git submodule** 形式接入（远程 `git@github.com:falling-ts/pi-working.git`） | 父仓库只记录 commit 指针 |
+| `pi-start-command/` | 自研 pi 扩展：**会话开始前运行配置的启动命令**（`PI_START_COMMAND`），以 **git submodule** 形式接入（远程 `git@github.com:falling-ts/pi-start-command.git`） | 父仓库只记录 commit 指针 |
 | `.gitignore` | 忽略规则（构建产物、环境密钥、编辑器/系统垃圾、agent 运行期状态） | ✅ 入库 |
 | `.gitmodules` | 子项目（submodule）声明：路径、URL、跟踪分支 | ✅ 入库 |
 
@@ -53,8 +54,9 @@
 | 4.3 | 加入用户 PATH | 任意目录、任意 shell 裸 `pi` 可用 |
 | 4.4 | 软链自研扩展 `pi-chinese` | pi 全局强制全程简体中文 |
 | 4.5 | 软链自研扩展 `pi-working` | 状态指示器中文化（Working/请求中/响应中/执行中） |
-| 4.6 | 安装扩展包 `pi-boop` | 每轮结束响一声提示 |
-| 4.7 | （可选）WorkBuddy 反代快捷方式 | 开始菜单一键启动反代 |
+| 4.6 | 软链自研扩展 `pi-start-command` | 会话开始前运行 `PI_START_COMMAND` 配置的启动命令 |
+| 4.7 | 安装扩展包 `pi-boop` | 每轮结束响一声提示 |
+| 4.8 | （可选）WorkBuddy 反代快捷方式 | 开始菜单一键启动反代 |
 
 ### 4.1 拉取子模块
 
@@ -112,7 +114,22 @@ New-Item -ItemType SymbolicLink `
 该扩展把运行时的状态指示器翻译为中文：`工作中` / `请求中`（已请求模型、等首个 token）/ `响应中`
 （收到首个 token）/ `执行中`（工具、命令等非模型工作）；环境变量 `PI_WORKING_LANG=en` 可切英文（默认中文）。
 
-### 4.6 安装扩展包 pi-boop
+### 4.6 软链自研扩展 pi-start-command
+
+同样软链即可（pi 通过 `jiti` 直读 `.ts`，无需构建）：
+
+```powershell
+New-Item -ItemType SymbolicLink `
+  -Path "$env:USERPROFILE\.pi\agent\extensions\pi-start-command" `
+  -Target "D:\AI\pi-s\pi-start-command"
+```
+
+该扩展在每次**用户发起会话**（`before_agent_start` 且 `messageType === "user"`）时先运行
+`PI_START_COMMAND` 配置的命令行，完成后 pi 才把 prompt 发给模型；命令失败（非零退出/超时）
+只弹通知、不阻断会话。环境变量：`PI_START_COMMAND`（未设则插件完全静默）、
+`PI_START_COMMAND_TIMEOUT_MS`（默认 10000）、`PI_START_COMMAND_QUIET=1`（成功不弹通知）。
+
+### 4.7 安装扩展包 pi-boop
 
 ```powershell
 # 安装 / 更新需走代理：npm 默认未配代理，直连 registry 会超时
@@ -131,7 +148,7 @@ pi install npm:pi-boop
 注意：**安装需要代理，但运行 pi 时不要给代理**，否则本地 WorkBuddy 反代请求（`127.0.0.1:8788`）
 会被错误转发而报 `Connection error`。
 
-### 4.7 （可选）WorkBuddy 反代开始菜单快捷方式
+### 4.8 （可选）WorkBuddy 反代开始菜单快捷方式
 
 仿 `comfy-server.lnk` 平铺单条目 `WorkBuddy Proxy.lnk`（放在开始菜单 Programs 根目录，双击启动反代）。
 该快捷方式不入库、手动创建。
@@ -162,5 +179,6 @@ pi --version       # cmd / pwsh 命中 pi.cmd（纯批处理直调 node），Git
 - 子模块：`refs/workbuddy-openai-proxy` → <https://github.com/yuan240324/workbuddy-openai-proxy.git>（跟踪分支 `main`）：把 WorkBuddy/CodeBuddy 额度包装成本机 OpenAI/Anthropic 兼容接口（默认 `http://127.0.0.1:8788/v1`）；根目录 `workbuddy-proxy.cmd` 管理其启停
 - 子模块：`pi-chinese` → <https://github.com/falling-ts/pi-chinese.git>（跟踪分支 `main`）：自研 pi 扩展，在每次请求前经 `before_agent_start` 钩子把"全程简体中文（含思考与中间输出）"写入系统提示词（初始化软链见 4.4）
 - 子模块：`pi-working` → <https://github.com/falling-ts/pi-working.git>（跟踪分支 `main`）：自研 pi 扩展，把运行时状态指示器翻译为中文（工作中/请求中/响应中/执行中），`PI_WORKING_LANG=en` 切英文（初始化软链见 4.5）
+- 子模块：`pi-start-command` → <https://github.com/falling-ts/pi-start-command.git>（跟踪分支 `main`）：自研 pi 扩展，在用户发起会话前运行 `PI_START_COMMAND` 配置的启动命令，失败只通知不阻断（初始化软链见 4.6）
 - 本地 pi 启动器：根目录 `pi.cmd`（纯批处理，直调 `node`）/ `pi.ps1`（PowerShell 原生入口）/ `pi`（Git Bash），运行的是 `.agents/scratch/pi` 这份工作副本（上游 `7d75a0e3e`，v1.2.0 的复制）；三者共用 `.agents/scratch/node-compile-cache`（V8 compile cache，不入库，可随时删）
 - 仓库说明见 [`README.md`](README.md)（子目录不含 README）

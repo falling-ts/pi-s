@@ -14,3 +14,6 @@
 	path = pi-working
 	url = git@github.com:falling-ts/pi-working.git
 	branch = main
+[submodule "pi-start-command"]
+	path = pi-start-command
+	url = git@github.com:falling-ts/pi-start-command.git
