@@ -12,7 +12,8 @@ pi agent 的专属工作空间：围绕上游 [pi](https://github.com/earendil-w
 | `AGENTS.md` | 空间规则与工作约定 | ✅ |
 | `README.md` | 本文件；**仓库唯一的 README** | ✅ |
 | `pi.cmd` `pi.ps1` `pi` | 本地 pi 启动器：从源码直跑上游 pi | ✅ |
-| `.gitattributes` | 行尾约定：`*.cmd` 保持 CRLF，根 `pi` 保持 LF | ✅ |
+| `workbuddy-proxy.cmd` `workbuddy-proxy.sh` | WorkBuddy 反代启动器（Windows cmd / Linux、macOS bash） | ✅ |
+| `.gitattributes` | 行尾约定：`*.cmd` 保持 CRLF，根 `pi` 与 `workbuddy-proxy.sh` 保持 LF | ✅ |
 | `.agents/` | agent 运行期状态：`tmp/` `scratch/` `cache/` `sessions/` | 仅 `.gitkeep` |
 | `docs/` | 正式文档：调研笔记、架构分析、实验记录、决策记录 | 仅 `.gitkeep` |
 | `refs/` | 外部参考项目容器 | 仅 `.gitkeep` |

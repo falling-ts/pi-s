@@ -19,13 +19,14 @@
 | `AGENTS.md` | 本文件：空间规则与工作约定 | ✅ 入库 |
 | `README.md` | 仓库说明；**本仓库唯一的 README** | ✅ 入库 |
 | `pi.cmd` `pi.ps1` `pi` | 本地 pi 启动器（cmd / PowerShell / Git Bash），从源码直跑 | ✅ 入库 |
-| `.gitattributes` | 行尾约定：`*.cmd` 保持 CRLF，根 `pi` 保持 LF | ✅ 入库 |
+| `.gitattributes` | 行尾约定：`*.cmd` 保持 CRLF，根 `pi` 与 `workbuddy-proxy.sh` 保持 LF | ✅ 入库 |
 | `.agents/` | agent 运行期状态：临时脚本、草稿、缓存、任务中间产物 | 仅 `.gitkeep`，运行期内容忽略 |
 | `docs/` | 正式文档：调研笔记、架构分析、实验记录、决策记录 | 仅 `.gitkeep`，文档入库 |
 | `refs/` | 外部参考项目容器 | 仅 `.gitkeep` |
 | `refs/pi/` | 上游 `pi` 源码，以 **git submodule** 形式接入 | 父仓库只记录 commit 指针 |
 | `refs/workbuddy-openai-proxy/` | WorkBuddy/CodeBuddy 本地 OpenAI/Anthropic 兼容反代源码，以 **git submodule** 形式接入（零依赖 `node server.mjs`） | 父仓库只记录 commit 指针 |
 | `workbuddy-proxy.cmd` | WorkBuddy 反代启动器（start/stop/restart/login/status/console/ask），委派给 `refs/workbuddy-openai-proxy/` | ✅ 入库 |
+| `workbuddy-proxy.sh` | 同上，Linux / macOS（bash）版本：后台用 `nohup`，控制台用 `xdg-open`，行尾保持 LF | ✅ 入库 |
 | `pi-chinese/` | 自研 pi 扩展：**强制全程简体中文**（通过 `before_agent_start` 钩子注入系统提示词），以 **git submodule** 形式接入（远程 `git@github.com:falling-ts/pi-chinese.git`） | 父仓库只记录 commit 指针 |
 | `pi-working/` | 自研 pi 扩展：**状态指示器中文化**（Working/请求中/响应中/执行中，`PI_WORKING_LANG` 切英文），以 **git submodule** 形式接入（远程 `git@github.com:falling-ts/pi-working.git`） | 父仓库只记录 commit 指针 |
 | `pi-start-command/` | 自研 pi 扩展：**会话开始前运行配置的启动命令**（`PI_START_COMMAND`），以 **git submodule** 形式接入（远程 `git@github.com:falling-ts/pi-start-command.git`） | 父仓库只记录 commit 指针 |
@@ -176,7 +177,7 @@ pi --version       # cmd / pwsh 命中 pi.cmd（纯批处理直调 node），Git
 
 - 本空间远程仓库：`origin` → `git@github.com:falling-ts/pi-s.git`（分支 `main`）
 - 子模块：`refs/pi` → <https://github.com/earendil-works/pi>（跟踪分支 `main`）
-- 子模块：`refs/workbuddy-openai-proxy` → <https://github.com/yuan240324/workbuddy-openai-proxy.git>（跟踪分支 `main`）：把 WorkBuddy/CodeBuddy 额度包装成本机 OpenAI/Anthropic 兼容接口（默认 `http://127.0.0.1:8788/v1`）；根目录 `workbuddy-proxy.cmd` 管理其启停
+- 子模块：`refs/workbuddy-openai-proxy` → <https://github.com/yuan240324/workbuddy-openai-proxy.git>（跟踪分支 `main`）：把 WorkBuddy/CodeBuddy 额度包装成本机 OpenAI/Anthropic 兼容接口（默认 `http://127.0.0.1:8788/v1`）；根目录 `workbuddy-proxy.cmd`（Windows）与 `workbuddy-proxy.sh`（Linux / macOS）管理其启停
 - 子模块：`pi-chinese` → <https://github.com/falling-ts/pi-chinese.git>（跟踪分支 `main`）：自研 pi 扩展，在每次请求前经 `before_agent_start` 钩子把"全程简体中文（含思考与中间输出）"写入系统提示词（初始化软链见 4.4）
 - 子模块：`pi-working` → <https://github.com/falling-ts/pi-working.git>（跟踪分支 `main`）：自研 pi 扩展，把运行时状态指示器翻译为中文（工作中/请求中/响应中/执行中），`PI_WORKING_LANG=en` 切英文（初始化软链见 4.5）
 - 子模块：`pi-start-command` → <https://github.com/falling-ts/pi-start-command.git>（跟踪分支 `main`）：自研 pi 扩展，在用户发起会话前运行 `PI_START_COMMAND` 配置的启动命令，失败只通知不阻断（初始化软链见 4.6）

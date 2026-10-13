@@ -3,3 +3,4 @@
 *.cmd text eol=crlf
 # bash 脚本必须 LF（CRLF 会破坏 shebang）
 /pi text eol=lf
+/workbuddy-proxy.sh text eol=lf
