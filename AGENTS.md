@@ -81,6 +81,11 @@ npm.cmd run hydrate:model-data                     # 联网生成 providers/data
 
 - **必须用 `npm.cmd` 而不是 `npm`**：本机继承的 `npm_*` 环境变量会让 `npm`（`npm.ps1`）走错路径并报 `Unknown command: "pm"`。
 - **`hydrate:model-data` 必不可少且需要联网**：上游把 `packages/ai/src/providers/data/` 写进了 `.gitignore`，它是生成物；缺它时任何 `pi` 调用都会以 `ERR_MODULE_NOT_FOUND: .../providers/data/.manifest.json` 失败。
+- **`hydrate:model-data` 要走代理，但 `HTTPS_PROXY` 对 Node 内置 `fetch` 无效**：Node 22 的 undici 默认**不读** `HTTP_PROXY` / `HTTPS_PROXY`（`npm` 自己读，所以 `npm.cmd ci` 只设这两个就够了）。直连 `radius.pi.dev` 会间歇性 `UND_ERR_CONNECT_TIMEOUT`，必须再加 `NODE_USE_ENV_PROXY=1`：
+  ```powershell
+  $env:HTTP_PROXY="http://127.0.0.1:7890"; $env:HTTPS_PROXY="http://127.0.0.1:7890"; $env:NODE_USE_ENV_PROXY="1"
+  npm.cmd run hydrate:model-data
+  ```
 
 ### 4.3 加入用户 PATH
 
@@ -181,5 +186,5 @@ pi --version       # cmd / pwsh 命中 pi.cmd（纯批处理直调 node），Git
 - 子模块：`pi-chinese` → <https://github.com/falling-ts/pi-chinese.git>（跟踪分支 `main`）：自研 pi 扩展，在每次请求前经 `before_agent_start` 钩子把"全程简体中文（含思考与中间输出）"写入系统提示词（初始化软链见 4.4）
 - 子模块：`pi-working` → <https://github.com/falling-ts/pi-working.git>（跟踪分支 `main`）：自研 pi 扩展，把运行时状态指示器翻译为中文（工作中/请求中/响应中/执行中），`PI_WORKING_LANG=en` 切英文（初始化软链见 4.5）
 - 子模块：`pi-start-command` → <https://github.com/falling-ts/pi-start-command.git>（跟踪分支 `main`）：自研 pi 扩展，在用户发起会话前运行 `PI_START_COMMAND` 配置的启动命令，失败只通知不阻断（初始化软链见 4.6）
-- 本地 pi 启动器：根目录 `pi.cmd`（纯批处理，直调 `node`）/ `pi.ps1`（PowerShell 原生入口）/ `pi`（Git Bash），运行的是 `.agents/scratch/pi` 这份工作副本（上游 `7d75a0e3e`，v1.2.0 的复制）；三者共用 `.agents/scratch/node-compile-cache`（V8 compile cache，不入库，可随时删）
+- 本地 pi 启动器：根目录 `pi.cmd`（纯批处理，直调 `node`）/ `pi.ps1`（PowerShell 原生入口）/ `pi`（Git Bash），运行的是 `.agents/scratch/pi` 这份工作副本（上游 `2ec55d808`，v1.3.0+33 提交、包版本 1.3.0 的复制）；三者共用 `.agents/scratch/node-compile-cache`（V8 compile cache，不入库，可随时删）
 - 仓库说明见 [`README.md`](README.md)（子目录不含 README）

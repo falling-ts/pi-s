@@ -77,6 +77,7 @@ npm.cmd run hydrate:model-data    # 生成 packages/ai/src/providers/data/
 
 - **必须用 `npm.cmd` 而不是 `npm`**：本机继承的 `npm_*` 环境变量（如 `npm_execpath` 指向 pnpm store）会让 `npm.ps1` 走错路径，报 `Unknown command: "pm"`。
 - **`hydrate:model-data` 必不可少且需要联网**：上游把 `packages/ai/src/providers/data/` 写进了 `.gitignore`，它是生成物；缺它时任何 `pi` 调用都会以 `ERR_MODULE_NOT_FOUND: .../providers/data/.manifest.json` 失败。该命令从 models.dev / OpenRouter / Vercel AI Gateway / Radius / NVIDIA NIM 拉取模型目录（`--strict`，任一失败即报错）。
+- **联网除了代理变量还要 `NODE_USE_ENV_PROXY=1`**：Node 内置 `fetch`（undici）默认不读 `HTTP_PROXY`/`HTTPS_PROXY`，直连 Cloudflare 后的 `radius.pi.dev` 会间歇 `UND_ERR_CONNECT_TIMEOUT`。完整写法：`$env:HTTP_PROXY=$env:HTTPS_PROXY="http://127.0.0.1:7890"; $env:NODE_USE_ENV_PROXY="1"; npm.cmd run hydrate:model-data`。
 
 ## 文档计划（docs/）
 
