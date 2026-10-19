@@ -18,9 +18,9 @@ pi agent 的专属工作空间：围绕上游 [pi](https://github.com/earendil-w
 | `docs/` | 正式文档：调研笔记、架构分析、实验记录、决策记录 | 仅 `.gitkeep` |
 | `refs/` | 外部参考项目容器 | 仅 `.gitkeep` |
 | `refs/pi/` | 上游 pi 源码（submodule，**只读镜像**） | 仅 commit 指针 |
-| `pi-chinese/` | 自研 pi 扩展：强制全程简体中文（submodule） | 仅 commit 指针 |
-| `pi-working/` | 自研 pi 扩展：状态指示器中文化（submodule） | 仅 commit 指针 |
-| `pi-start-command/` | 自研 pi 扩展：会话开始前运行 `PI_START_COMMAND` 启动命令（submodule） | 仅 commit 指针 |
+| `pi-chinese/` | 自研 pi 扩展：强制全程简体中文（submodule，npm `@falling-ts/pi-chinese@1.3.0`） | 仅 commit 指针 |
+| `pi-working/` | 自研 pi 扩展：状态指示器中文化（submodule，npm `@falling-ts/pi-working@1.1.0`） | 仅 commit 指针 |
+| `pi-start-command/` | 自研 pi 扩展：会话开始前运行 `PI_START_COMMAND` 启动命令（submodule，npm `@falling-ts/pi-start-command@1.1.0`） | 仅 commit 指针 |
 | `.gitignore` | 忽略规则：构建产物、日志、`.env` 与密钥、编辑器/系统垃圾、agent 运行期状态 | ✅ |
 | `.gitmodules` | 子项目（submodule）声明：路径、URL、跟踪分支 | ✅ |
 
