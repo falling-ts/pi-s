@@ -6,7 +6,13 @@
 set -euo pipefail
 
 self="${BASH_SOURCE[0]}"
-here="$(cd "${self%/*}" && pwd -W)"
+# `pwd -W` 是 MSYS/Git Bash 专有选项（返回 Windows 风格路径），Linux 上不支持；
+# 有 -W 时沿用（保持与 pi.cmd 的调用方式一致），否则退回 POSIX 的 -P。
+if (pwd -W >/dev/null 2>&1); then
+	here="$(cd "${self%/*}" && pwd -W)"
+else
+	here="$(cd "${self%/*}" && pwd -P)"
+fi
 pi_root="$here/.agents/scratch/pi"
 resolver="$pi_root/packages/coding-agent/src/experimental/source-resolver.ts"
 cli="$pi_root/packages/coding-agent/src/cli.ts"
