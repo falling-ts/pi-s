@@ -52,4 +52,6 @@ desktop.ini
 .agents/.cache/
 .agents/scratch/
 .agents/sessions/
+# WorkBuddy 会话记忆（按日期分文件的运行期产物，不入库）
+.workbuddy/
 *.local
