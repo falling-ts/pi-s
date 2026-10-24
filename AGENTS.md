@@ -86,6 +86,16 @@ npm.cmd run hydrate:model-data                     # 联网生成 providers/data
   $env:HTTP_PROXY="http://127.0.0.1:7890"; $env:HTTPS_PROXY="http://127.0.0.1:7890"; $env:NODE_USE_ENV_PROXY="1"
   npm.cmd run hydrate:model-data
   ```
+- **`hydrate:model-data` 常需重试**：它要并发抓 NVIDIA NIM / OpenRouter / Vercel AI Gateway / Radius 四个源，`--strict` 下任一源失败即整条中止（不写盘）。代理隧道在大并发下频繁 `ECONNRESET` / `UND_ERR_CONNECT_TIMEOUT`，实测需循环重试数次才凑齐四源全通；脚本无内置重试，只能外层重跑。
+  ```bash
+  # Linux / macOS：失败就重跑，直到四行 Fetched 全出现
+  for i in 1 2 3 4 5; do
+    HTTP_PROXY=http://127.0.0.1:7890 HTTPS_PROXY=http://127.0.0.1:7890 NODE_USE_ENV_PROXY=1 \
+      node scripts/generate-models.ts --strict --data-only && break
+    sleep 5
+  done
+  ```
+  生成后必查：`node packages/ai/scripts/check-model-data.ts` 应输出 `Generated model data is valid.`
 
 ### 4.3 加入用户 PATH
 
