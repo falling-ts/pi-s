@@ -73,12 +73,12 @@ npm.cmd ci --ignore-scripts
 npm.cmd run hydrate:model-data    # 生成 packages/ai/src/providers/data/
 ```
 
-两个坑：
+三个坑：
 
 - **必须用 `npm.cmd` 而不是 `npm`**：本机继承的 `npm_*` 环境变量（如 `npm_execpath` 指向 pnpm store）会让 `npm.ps1` 走错路径，报 `Unknown command: "pm"`。
 - **`hydrate:model-data` 必不可少且需要联网**：上游把 `packages/ai/src/providers/data/` 写进了 `.gitignore`，它是生成物；缺它时任何 `pi` 调用都会以 `ERR_MODULE_NOT_FOUND: .../providers/data/.manifest.json` 失败。该命令从 models.dev / OpenRouter / Vercel AI Gateway / Radius / NVIDIA NIM 拉取模型目录（`--strict`，任一失败即报错）。
-- **联网除了代理变量还要 `NODE_USE_ENV_PROXY=1`**：Node 内置 `fetch`（undici）默认不读 `HTTP_PROXY`/`HTTPS_PROXY`，直连 Cloudflare 后的 `radius.pi.dev` 会间歇 `UND_ERR_CONNECT_TIMEOUT`。完整写法：`$env:HTTP_PROXY=$env:HTTPS_PROXY="http://127.0.0.1:7890"; $env:NODE_USE_ENV_PROXY="1"; npm.cmd run hydrate:model-data`。
-- **该命令常需重跑几次**：要并发抓 NVIDIA NIM / OpenRouter / Vercel AI Gateway / Radius 四源，`--strict` 下任一源失败就整条中止且不写盘；代理隧道在大并发下易 `ECONNRESET` / `UND_ERR_CONNECT_TIMEOUT`。脚本无内置重试，失败就在外层循环重跑，直到四行 `Fetched ...` 全出现；跑完用 `node packages/ai/scripts/check-model-data.ts` 确认输出 `Generated model data is valid.`。
+- **`NODE_USE_ENV_PROXY=1` 对 Node 22 的内置 `fetch` 无效**：undici 不读 `HTTP_PROXY`/`HTTPS_PROXY`，实测加了 `NODE_USE_ENV_PROXY=1` 仍然裸 IP 直连，卡在 `radius.pi.dev` 的坏 IP（`172.67.221.13` 会挂满 10s）上报 `UND_ERR_CONNECT_TIMEOUT`。可靠做法是用 `--import` 预载一个把全局 `fetch` 换成 undici `ProxyAgent`（指向 `127.0.0.1:7890`）的模块，代码片段见 `AGENTS.md` 4.2。
+- **该命令常需重跑几次**：要并发抓 models.dev / OpenRouter / NVIDIA NIM / Vercel AI Gateway / Radius 五源，`--strict` 下任一源失败就整条中止且不写盘；代理隧道在大并发下易 `ECONNRESET` / `UND_ERR_CONNECT_TIMEOUT`。脚本无内置重试，失败就在外层循环重跑，直到各源都输出 `Fetched ...`；跑完用 `node packages/ai/scripts/check-model-data.ts` 确认输出 `Generated model data is valid.`。
 
 ## 文档计划（docs/）
 

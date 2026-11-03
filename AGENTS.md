@@ -77,25 +77,35 @@ npm.cmd ci --ignore-scripts                        # 必须用 npm.cmd，见下
 npm.cmd run hydrate:model-data                     # 联网生成 providers/data（上游 gitignore 的生成物）
 ```
 
-两个坑：
+三个坑：
 
 - **必须用 `npm.cmd` 而不是 `npm`**：本机继承的 `npm_*` 环境变量会让 `npm`（`npm.ps1`）走错路径并报 `Unknown command: "pm"`。
 - **`hydrate:model-data` 必不可少且需要联网**：上游把 `packages/ai/src/providers/data/` 写进了 `.gitignore`，它是生成物；缺它时任何 `pi` 调用都会以 `ERR_MODULE_NOT_FOUND: .../providers/data/.manifest.json` 失败。
-- **`hydrate:model-data` 要走代理，但 `HTTPS_PROXY` 对 Node 内置 `fetch` 无效**：Node 22 的 undici 默认**不读** `HTTP_PROXY` / `HTTPS_PROXY`（`npm` 自己读，所以 `npm.cmd ci` 只设这两个就够了）。直连 `radius.pi.dev` 会间歇性 `UND_ERR_CONNECT_TIMEOUT`，必须再加 `NODE_USE_ENV_PROXY=1`：
+- **`hydrate:model-data` 要走代理，但 `HTTPS_PROXY` 和 `NODE_USE_ENV_PROXY` 对 Node 22 内置 `fetch` 都无效**：Node 22 的 undici 不读这两个变量（`npm` 自己读，所以 `npm.cmd ci` 只设 `HTTP_PROXY` / `HTTPS_PROXY` 就够了）。实测 `NODE_USE_ENV_PROXY=1` 仍走直连，报错里的 `attempted addresses` 是 IPv6 或在等坏 IP；`radius.pi.dev` 的 `172.67.221.13` 会挂满 10s 连接超时（`104.21.62.67` 只需 3s），而 Node 对同族多个 IP 是顺序尝试，卡住即失败。可靠做法是用一个临时 preload 把全局 `fetch` 换成 undici 的 `ProxyAgent`：
+
   ```powershell
-  $env:HTTP_PROXY="http://127.0.0.1:7890"; $env:HTTPS_PROXY="http://127.0.0.1:7890"; $env:NODE_USE_ENV_PROXY="1"
+  # 先写 .agents/tmp/proxy-fetch.mjs：
+  #   import { createRequire } from 'node:module';
+  #   const require = createRequire('D:/AI/pi-s/.agents/scratch/pi/');
+  #   const { ProxyAgent, fetch: undiciFetch } = require('undici');
+  #   const dispatcher = new ProxyAgent('http://127.0.0.1:7890');
+  #   globalThis.fetch = (input, init) => undiciFetch(input, { ...init, dispatcher });
+  $env:NODE_OPTIONS="--import=file:///D:/AI/pi-s/.agents/tmp/proxy-fetch.mjs"
   npm.cmd run hydrate:model-data
   ```
-- **`hydrate:model-data` 常需重试**：它要并发抓 NVIDIA NIM / OpenRouter / Vercel AI Gateway / Radius 四个源，`--strict` 下任一源失败即整条中止（不写盘）。代理隧道在大并发下频繁 `ECONNRESET` / `UND_ERR_CONNECT_TIMEOUT`，实测需循环重试数次才凑齐四源全通；脚本无内置重试，只能外层重跑。
-  ```bash
-  # Linux / macOS：失败就重跑，直到四行 Fetched 全出现
-  for i in 1 2 3 4 5; do
-    HTTP_PROXY=http://127.0.0.1:7890 HTTPS_PROXY=http://127.0.0.1:7890 NODE_USE_ENV_PROXY=1 \
-      node scripts/generate-models.ts --strict --data-only && break
-    sleep 5
-  done
+- **`hydrate:model-data` 实际是 `generate.ts --strict --data-only`，必须五源一次全通**：它并发抓 models.dev / OpenRouter / NVIDIA NIM / Vercel AI Gateway / Radius，任一源失败即整条中止且不写盘，所以上面那个代理必须覆盖全部源。代理隧道在大并发下仍偶发 `ECONNRESET` / `UND_ERR_CONNECT_TIMEOUT`，脚本没有内置重试，失败就在外层重跑：
+
+  ```powershell
+  # 失败重跑即可，命令幂等（只覆盖 providers/data 生成物）
+  for ($i = 1; $i -le 5; $i++) {
+    $env:NODE_OPTIONS="--import=file:///D:/AI/pi-s/.agents/tmp/proxy-fetch.mjs"
+    npm.cmd run hydrate:model-data
+    if ($LASTEXITCODE -eq 0) { break }
+    Start-Sleep -Seconds 5
+  }
   ```
-  生成后必查：`node packages/ai/scripts/check-model-data.ts` 应输出 `Generated model data is valid.`
+
+  跑完必查：`node packages/ai/scripts/check-model-data.ts` 应输出 `Generated model data is valid.`
 
 ### 4.3 加入用户 PATH
 
@@ -196,5 +206,5 @@ pi --version       # cmd / pwsh 命中 pi.cmd（纯批处理直调 node），Git
 - 子模块：`pi-chinese` → <https://github.com/falling-ts/pi-chinese.git>（跟踪分支 `main`）：自研 pi 扩展，在每次请求前经 `before_agent_start` 钩子把"全程简体中文（含思考与中间输出）"写入系统提示词（初始化软链见 4.4）。npm: `@falling-ts/pi-chinese@1.4.0`，peer `>=1.4.0`
 - 子模块：`pi-working` → <https://github.com/falling-ts/pi-working.git>（跟踪分支 `main`）：自研 pi 扩展，把运行时状态指示器翻译为中文（工作中/请求中/响应中/执行中），`PI_WORKING_LANG=en` 切英文（初始化软链见 4.5）。npm: `@falling-ts/pi-working@1.2.0`，peer `>=1.4.0`
 - 子模块：`pi-start-command` → <https://github.com/falling-ts/pi-start-command.git>（跟踪分支 `main`）：自研 pi 扩展，在用户发起会话前运行 `PI_START_COMMAND` 配置的启动命令，失败只通知不阻断（初始化软链见 4.6）。npm: `@falling-ts/pi-start-command@1.2.0`，peer `>=1.4.0`
-- 本地 pi 启动器：根目录 `pi.cmd`（纯批处理，直调 `node`）/ `pi.ps1`（PowerShell 原生入口）/ `pi`（Git Bash），运行的是 `.agents/scratch/pi` 这份工作副本（上游 `f321e5bdd`，v1.4.0+59 提交、包版本 1.4.0 的复制）；三者共用 `.agents/scratch/node-compile-cache`（V8 compile cache，不入库，可随时删）
+- 本地 pi 启动器：根目录 `pi.cmd`（纯批处理，直调 `node`）/ `pi.ps1`（PowerShell 原生入口）/ `pi`（Git Bash），运行的是 `.agents/scratch/pi` 这份工作副本（上游 `90b42bca6`，v1.5.0+59 提交、包版本 1.5.0 的复制）；三者共用 `.agents/scratch/node-compile-cache`（V8 compile cache，不入库，可随时删）
 - 仓库说明见 [`README.md`](README.md)（子目录不含 README）
