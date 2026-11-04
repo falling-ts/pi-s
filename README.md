@@ -18,9 +18,9 @@ pi agent 的专属工作空间：围绕上游 [pi](https://github.com/earendil-w
 | `docs/` | 正式文档：调研笔记、架构分析、实验记录、决策记录 | 仅 `.gitkeep` |
 | `refs/` | 外部参考项目容器 | 仅 `.gitkeep` |
 | `refs/pi/` | 上游 pi 源码（submodule，**只读镜像**） | 仅 commit 指针 |
-| `pi-chinese/` | 自研 pi 扩展：强制全程简体中文（submodule，npm `@falling-ts/pi-chinese@1.4.0`） | 仅 commit 指针 |
-| `pi-working/` | 自研 pi 扩展：状态指示器中文化（submodule，npm `@falling-ts/pi-working@1.2.0`） | 仅 commit 指针 |
-| `pi-start-command/` | 自研 pi 扩展：会话开始前运行 `PI_START_COMMAND` 启动命令（submodule，npm `@falling-ts/pi-start-command@1.2.0`） | 仅 commit 指针 |
+| `pi-chinese/` | 自研 pi 扩展：强制全程简体中文（submodule，npm `@falling-ts/pi-chinese@1.4.0`，仓库 1.5.0 待发布） | 仅 commit 指针 |
+| `pi-working/` | 自研 pi 扩展：状态指示器中文化（submodule，npm `@falling-ts/pi-working@1.2.0`，仓库 1.3.0 待发布） | 仅 commit 指针 |
+| `pi-start-command/` | 自研 pi 扩展：会话开始前运行 `PI_START_COMMAND` 启动命令（submodule，npm `@falling-ts/pi-start-command@1.2.0`，仓库 1.3.0 待发布） | 仅 commit 指针 |
 | `.gitignore` | 忽略规则：构建产物、日志、`.env` 与密钥、编辑器/系统垃圾、agent 运行期状态 | ✅ |
 | `.gitmodules` | 子项目（submodule）声明：路径、URL、跟踪分支 | ✅ |
 
@@ -57,9 +57,9 @@ git submodule add -b main <repo-url> refs/<name>
 | `pi.ps1` | PowerShell 原生入口，可独立使用；`pi.cmd` **不**调用它 | `.\pi.ps1` |
 | `pi` | Git Bash / MSYS；依赖 `pwd -W`，**不适用于 WSL 的 bash** | `pi` |
 
-三个启动器都把 `NODE_COMPILE_CACHE` 指向 `.agents/scratch/node-compile-cache`（V8 compile cache，约 3.5 MB / 1500 个文件，随 `.agents/` 一起忽略）。
+三个启动器都把 `NODE_COMPILE_CACHE` 指向 `.agents/scratch/node-compile-cache`（V8 compile cache，约 5.2 MB / 2100 个文件，随 `.agents/` 一起忽略）。
 
-启动开销（本机实测，Node 22.20 / Windows，三次取最小值）：cmd 约 1011 ms、PowerShell 约 980 ms、Git Bash 约 1180 ms、不含启动器的直接 `node` 约 943 ms。其中 pi 自身逻辑只占约 55 ms（`PI_TIMING=1` 可见），其余是 538 个模块的类型剥离与模型目录 JSON 解析。
+启动开销（本机实测，Node 22.20 / Windows，四次取最小值）：cmd 约 2756 ms、PowerShell 约 2623 ms、不含启动器的直接 `node` 约 2744 ms。上游 1.5.0 的模块图明显变大（新增 `pi-schema`、Chord v2、MCP 等包），比 1.4.0 时约 1.0 s 的启动慢了一倍多。
 
 **仓库根 `D:\AI\pi-s` 已加入用户 PATH**（`HKCU\Environment`，仅用户级，未动系统 PATH），所以任意目录下裸 `pi` 都能用，不限于仓库根。若在旧终端里 `pi` 找不到，重开终端让 PATH 生效即可；换机器后需重新添加该条目。
 
@@ -67,7 +67,7 @@ git submodule add -b main <repo-url> refs/<name>
 
 ```powershell
 git submodule update --init refs/pi
-robocopy refs\pi .agents\scratch\pi /E /XD .git    # 退出码 0-7 都算成功
+robocopy refs\pi .agents\scratch\pi /MIR /XD .git /XF .git    # 退出码 0-7 都算成功；子模块的 .git 是文件，须用 /XF 排除
 cd .agents\scratch\pi
 npm.cmd ci --ignore-scripts
 npm.cmd run hydrate:model-data    # 生成 packages/ai/src/providers/data/
@@ -76,9 +76,9 @@ npm.cmd run hydrate:model-data    # 生成 packages/ai/src/providers/data/
 三个坑：
 
 - **必须用 `npm.cmd` 而不是 `npm`**：本机继承的 `npm_*` 环境变量（如 `npm_execpath` 指向 pnpm store）会让 `npm.ps1` 走错路径，报 `Unknown command: "pm"`。
-- **`hydrate:model-data` 必不可少且需要联网**：上游把 `packages/ai/src/providers/data/` 写进了 `.gitignore`，它是生成物；缺它时任何 `pi` 调用都会以 `ERR_MODULE_NOT_FOUND: .../providers/data/.manifest.json` 失败。该命令从 models.dev / OpenRouter / Vercel AI Gateway / Radius / NVIDIA NIM 拉取模型目录（`--strict`，任一失败即报错）。
+- **`hydrate:model-data` 必不可少且需要联网**：上游把 `packages/ai/src/providers/data/` 写进了 `.gitignore`，它是生成物；缺它时任何 `pi` 调用都会以 `ERR_MODULE_NOT_FOUND: .../providers/data/.manifest.json` 失败。该命令从 models.dev（catalog 与 decision 两个端点）/ OpenRouter / Vercel AI Gateway / Radius / NVIDIA NIM 拉取模型目录（`--strict`，任一失败即报错）。
 - **`NODE_USE_ENV_PROXY=1` 对 Node 22 的内置 `fetch` 无效**：undici 不读 `HTTP_PROXY`/`HTTPS_PROXY`，实测加了 `NODE_USE_ENV_PROXY=1` 仍然裸 IP 直连，卡在 `radius.pi.dev` 的坏 IP（`172.67.221.13` 会挂满 10s）上报 `UND_ERR_CONNECT_TIMEOUT`。可靠做法是用 `--import` 预载一个把全局 `fetch` 换成 undici `ProxyAgent`（指向 `127.0.0.1:7890`）的模块，代码片段见 `AGENTS.md` 4.2。
-- **该命令常需重跑几次**：要并发抓 models.dev / OpenRouter / NVIDIA NIM / Vercel AI Gateway / Radius 五源，`--strict` 下任一源失败就整条中止且不写盘；代理隧道在大并发下易 `ECONNRESET` / `UND_ERR_CONNECT_TIMEOUT`。脚本无内置重试，失败就在外层循环重跑，直到各源都输出 `Fetched ...`；跑完用 `node packages/ai/scripts/check-model-data.ts` 确认输出 `Generated model data is valid.`。
+- **该命令常需重跑几次**：要并发抓上述 6 个端点，`--strict` 下任一源失败就整条中止且不写盘；代理隧道在大并发下易 `ECONNRESET` / `UND_ERR_CONNECT_TIMEOUT`。脚本无内置重试，失败就在外层循环重跑，直到各源都输出 `Fetching ...` 且无 `Failed to fetch`；跑完用 `node packages/ai/scripts/check-model-data.ts` 确认输出 `Generated model data is valid.`。
 
 ## 文档计划（docs/）
 
